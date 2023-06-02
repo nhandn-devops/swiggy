@@ -1,0 +1,33 @@
+server:
+  port: ${PORT:8761}
+eureka:
+  instance:
+    preferIpAddress: ${PRFER_ID_ADDRESS:false}
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:${spring.application.name}}
+    appname: ${spring.application.name}
+  client:
+    registerWithEureka: ${BOOL_REGISTER:false}
+    fetchRegistry: ${BOOL_FETCH:false}
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER:http://${eureka.instance.hostname}:${server.port}/eureka/}
+  server:
+    enable-self-preservation: ${SELF_PRESERVATION:false}
+    # The time interval for eureka server to clean up invalid nodes, default 60 seconds
+    eviction-interval-timer-in-ms: 5000
+    # Time for eureka server to refresh the readCacheMap (secondary cache), default time 30 seconds
+    response-cache-update-interval-ms: 5000
+spring:
+  application:
+    name: eureka-server
+
+management:
+  endpoint:
+    beans:
+      cache:
+        time-to-live: 1s
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      discovery:
+        enabled: true

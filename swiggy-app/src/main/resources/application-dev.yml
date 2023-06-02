@@ -1,0 +1,13 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: SWIGGY-APP
+
+swiggy.url : ${URL:http://RESTAURANT-SERVICE}
+
+eureka:
+  client:
+    service-url:
+      defaultZone : ${EUREKA_SERVER}
