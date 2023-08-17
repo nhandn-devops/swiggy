@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiggy-app
+  labels:
+    app: swiggy-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: swiggy-app
+  template:
+    metadata:
+      labels:
+        app: swiggy-app
+    spec:
+      containers:
+        - name: swiggy-app
+          image: 19269506/swiggy-app
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          env: # Setting Environmental Variables
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: eureka.instance.prefer-ip-address
+              value: "true"
+            - name: EUREKA_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: eureka-cm
+                  key: eureka_service_address
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swiggy-service
+  labels:
+    app: swiggy-app
+spec:
+#  type: NodePort
+#  clusterIP: None
+  selector:
+    app: swiggy-app
+  ports:
+    - port: 8081
+      targetPort: 8081
+#      nodePort: 30161

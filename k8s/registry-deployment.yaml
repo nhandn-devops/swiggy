@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eureka-cm
+data:
+  # if you want to deploy n instances of eureka cluster,
+  # you should set eureka_service_address: http://eureka-0.eureka:8761/eureka,...,http://eureka-(n-1).eureka:8761/eureka
+  eureka_service_address: http://eureka-0.eureka:8761/eureka,http://eureka-1.eureka:8761/eureka,http://eureka-2.eureka:8761/eureka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-sevice-np
+  labels:
+    app: eureka
+spec:
+  ports:
+    - port: 8761
+      targetPort: 8761
+      nodePort: 30160
+  selector:
+    app: eureka
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka
+  labels:
+    app: eureka
+spec:
+  clusterIP: None
+  ports:
+    - port: 8761
+      name: eureka
+  selector:
+    app: eureka
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: eureka
+spec:
+  serviceName: eureka
+  replicas: 3
+  selector:
+    matchLabels:
+      app: eureka
+  template:
+    metadata:
+      labels:
+        app: eureka
+    spec:
+      containers:
+        - name: eureka
+          image: 19269506/swiggy-service-registry
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8761
+          resources:
+            limits:
+              memory: 512Mi
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: BOOL_REGISTER
+              value: "false"
+            - name: BOOL_FETCH
+              value: "false"
+            - name: SELF_PRESERVATION
+              value: "true"
+            - name: PRFER_ID_ADDRESS
+              value: "true"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: ${POD_NAME}.eureka
+            - name: EUREKA_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: eureka-cm
+                  key: eureka_service_address
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: 8761
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 5
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: 8761
+#            initialDelaySeconds: 30
+#            periodSeconds: 10
+#            timeoutSeconds: 5

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restaurant
+  labels:
+    app: restaurant-restapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: restaurant-restapp
+  template:
+    metadata:
+      labels:
+        app: restaurant-restapp
+    spec:
+      containers:
+        - name: restaurant-service
+          image: 19269506/restaurant-service
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          env: # Setting Environmental Variables
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: eureka.instance.prefer-ip-address
+              value: "true"
+            - name: EUREKA_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: eureka-cm
+                  key: eureka_service_address
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restaurant-service
+  labels:
+    app: restaurant-restapp
+spec:
+#  type: NodePort
+#  clusterIP: None
+  selector:
+    app: restaurant-restapp
+  ports:
+    - port: 8082
+      targetPort: 8082
+#      nodePort: 30164

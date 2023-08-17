@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: indentity-service
+  labels:
+    app: indentity-restapp
+spec:
+  selector:
+    app: indentity-restapp
+  ports:
+    - port: 9898
+      targetPort: 9898
+
+---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: indentity-service-np
+#  labels:
+#    app: indentity-restapp
+#spec:
+#  type: NodePort
+#  selector:
+#    app: indentity-restapp
+#  ports:
+#    - port: 9898
+#      targetPort: 9898
+#      nodePort: 30163
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indentity
+spec:
+  selector:
+    matchLabels:
+      app: indentity-restapp
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: indentity-restapp
+    spec:
+      containers:
+        - name: indentity-restapp
+          image: 19269506/identity-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9898
+          env:   # Setting Environmental Variables
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev
+            - name: eureka.instance.prefer-ip-address
+              value: "true"
+            - name: DB_HOST   # Setting Database host address from configMap
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-conf  # name of configMap
+                  key: host
+            - name: DB_NAME  # Setting Database name from configMap
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-conf
+                  key: name
+            - name: POSTGRES_USER  # Setting Database username from Secret
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials # Secret Name
+                  key: postgres_user
+            - name: POSTGRES_PASSWORD # Setting Database password from Secret
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: postgres_password
+            - name: EUREKA_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: eureka-cm
+                  key: eureka_service_address
